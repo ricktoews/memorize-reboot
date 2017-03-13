@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html ng-app="memorize">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Memorize</title>
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.4.2/angular-ui-router.js"></script>
+  <script src="data/memtext.js"></script>
+  <style type="text/css">
+    .verse {
+	    cursor: pointer;
+	}
+
+	.verse-input {
+		width:500px;
+		height:50px;
+		border: 1px solid #ddd;
+	}
+  </style>
+</head>
+<body>
+<div class="container-fluid" ui-view="passage">
+  <mem-verse ng-repeat="item in memtext.verses" verse-num={{item.verse}} verse-text="{{item.text}}" verse-wrong="{{item.wrong}}"></mem-verse>
+</div>
+
+<script>
+angular.module('memorize', ['ui.router'])
+
+.config(function($stateProvider, $urlRouterProvider) {
+	$stateProvider
+		.state('mem', {
+			url: '',
+			abstract: true
+		})
+
+		.state('mem.main', {
+			url: '/main',
+			views: {
+				'passage@': {
+					controller: function($scope) {
+						$scope.memtext = memtext;	
+					}
+				}
+			}
+		})
+		;
+	
+	$urlRouterProvider.otherwise('/main');
+})
+
+.directive('memVerse', function($rootScope) {
+	function inputField() {
+		var field = '<div class="verse-input" contenteditable></div>';
+		return field;
+	}
+
+	return {
+		scope: {
+			verse: '@verseNum',
+			text: '@verseText',
+			wrong: '@verseWrong'
+		},
+		templateUrl: './app/verse/verse.tpl.html',
+		link: function(scope, element, attr) {
+			$rootScope.$on('selectedVerse', function(obj, data) {
+				if (data.verse !== scope.verse) {
+					scope.plain = true;
+					scope.inputprompt = false;
+				}
+			});
+			scope.plain = true;
+			scope.inputprompt = false;
+
+			scope.versePrompt = function() {
+				scope.plain = false;
+				scope.inputprompt = true;
+				console.log(element);
+				$rootScope.$broadcast('selectedVerse', { verse: scope.verse });
+			};
+		}
+	};
+})
+;
+</script>
+</body>
+</html>
