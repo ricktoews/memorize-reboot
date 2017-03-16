@@ -3,7 +3,9 @@
     <div class="col-md-11">
 	  <div ng-if="plain" ng-click="versePrompt()">{{text}}</div>
       <div ng-if="inputprompt"><div class="verse-input" contenteditable></div></div>
-      <div ng-if="blanks">{{withblanks}}</div>
+      <div ng-if="blanks">
+        <fill-blanks blanks="withblanks"></fill-blanks>
+      </div>
 	</div>
   </div>
 

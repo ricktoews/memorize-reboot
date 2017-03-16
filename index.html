@@ -89,6 +89,42 @@ angular.module('memorize', ['ui.router'])
 				console.log(element);
 				$rootScope.$broadcast('selectedVerse', { verse: scope.verse });
 			};
+
+			scope.process = function() {
+				console.log('memVerse process');
+			};
+		}
+	};
+})
+
+.directive('fillBlanks', function() {
+	return {
+		scope: {
+			blanks: '='
+		},
+		templateUrl: './app/verse/fill-blanks.tpl.html',
+		link: function(scope, el, attr) {
+console.log('fillBlanks', el);
+			scope.isBlank = function(word) {
+				return /QQQQ/.test(word);
+			};
+
+			scope.process = function() {
+				console.log('process');
+			};
+		}
+	}
+})
+
+.directive('verseWordOrBlank', function() {
+	return {
+		scope: {
+			verseWord: '@verseWord',
+			wordIndex: '@wordIndex'
+		},
+		templateUrl: './app/verse/verse-word-or-blank.tpl.html',
+		link: function(scope, el, attr) {
+			console.log('verseWordOrBlank', attr);
 		}
 	};
 })
@@ -97,12 +133,11 @@ angular.module('memorize', ['ui.router'])
 	var helper = {};
 
 	helper.parseVerse = function(text, wrong) {
-		var div = document.createElement('div');
 		var words = text.split(/ /);
 		var withBlanks = [];
 		words.forEach((word, idx) => {
 			if (wrong.indexOf(idx) !== -1) {
-				var blank = word.replace(/\w+/, '<input type="text">');
+				var blank = word.replace(/\w+/, 'QQQQ');
 				withBlanks.push(blank);
 			} else {
 				withBlanks.push(word);
@@ -110,8 +145,7 @@ angular.module('memorize', ['ui.router'])
 		});
 
 		var verseWithBlanks = withBlanks.join(' ');
-		div.innerHTML = verseWithBlanks;
-		return div;
+		return withBlanks;
 	};
 
 	return helper;
