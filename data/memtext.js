@@ -9,7 +9,7 @@ var memtext = {
 	{
 	    "verse": 2,
 	    "text": "With a mighty voice he shouted, \"Fallen! Fallen is Babylon the Great! She has become a home for demons and a haunt for every evil spirit, a haunt for every unclean and detestable bird.",
-	    "wrong": []
+	    "wrong": [2,13,25]
 	},
 	{
 	    "verse": 3,

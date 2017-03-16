@@ -25,7 +25,7 @@
 </head>
 <body>
 <div class="container-fluid" ui-view="passage">
-  <mem-verse ng-repeat="item in memtext.verses" verse-num={{item.verse}} verse-text="{{item.text}}" verse-wrong="{{item.wrong}}"></mem-verse>
+  <mem-verse ng-repeat="item in memtext.verses" verse-num={{item.verse}} verse-text="{{item.text}}" verse-wrong="item.wrong"></mem-verse>
 </div>
 
 <script>
@@ -53,7 +53,7 @@ angular.module('memorize', ['ui.router'])
 	$urlRouterProvider.otherwise('/main');
 })
 
-.directive('memVerse', function($rootScope) {
+.directive('memVerse', function($rootScope, VerseHelper) {
 	function inputField() {
 		var field = '<div class="verse-input" contenteditable></div>';
 		return field;
@@ -63,7 +63,7 @@ angular.module('memorize', ['ui.router'])
 		scope: {
 			verse: '@verseNum',
 			text: '@verseText',
-			wrong: '@verseWrong'
+			wrong: '=verseWrong'
 		},
 		templateUrl: './app/verse/verse.tpl.html',
 		link: function(scope, element, attr) {
@@ -71,20 +71,52 @@ angular.module('memorize', ['ui.router'])
 				if (data.verse !== scope.verse) {
 					scope.plain = true;
 					scope.inputprompt = false;
+					scope.blanks = false;
 				}
 			});
 			scope.plain = true;
 			scope.inputprompt = false;
+			scope.blanks = false;
 
 			scope.versePrompt = function() {
 				scope.plain = false;
-				scope.inputprompt = true;
+				if (scope.wrong.length > 0) {
+					scope.blanks = true;
+					scope.withblanks = VerseHelper.parseVerse(scope.text, scope.wrong);
+				} else {
+					scope.inputprompt = true;
+				}
 				console.log(element);
 				$rootScope.$broadcast('selectedVerse', { verse: scope.verse });
 			};
 		}
 	};
 })
+
+.factory('VerseHelper', function() {
+	var helper = {};
+
+	helper.parseVerse = function(text, wrong) {
+		var div = document.createElement('div');
+		var words = text.split(/ /);
+		var withBlanks = [];
+		words.forEach((word, idx) => {
+			if (wrong.indexOf(idx) !== -1) {
+				var blank = word.replace(/\w+/, '<input type="text">');
+				withBlanks.push(blank);
+			} else {
+				withBlanks.push(word);
+			}
+		});
+
+		var verseWithBlanks = withBlanks.join(' ');
+		div.innerHTML = verseWithBlanks;
+		return div;
+	};
+
+	return helper;
+})
+
 ;
 </script>
 </body>
