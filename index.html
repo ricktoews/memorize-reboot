@@ -90,9 +90,6 @@ angular.module('memorize', ['ui.router'])
 				$rootScope.$broadcast('selectedVerse', { verse: scope.verse });
 			};
 
-			scope.process = function() {
-				console.log('memVerse process');
-			};
 		}
 	};
 })
@@ -104,14 +101,6 @@ angular.module('memorize', ['ui.router'])
 		},
 		templateUrl: './app/verse/fill-blanks.tpl.html',
 		link: function(scope, el, attr) {
-console.log('fillBlanks', el);
-			scope.isBlank = function(word) {
-				return /QQQQ/.test(word);
-			};
-
-			scope.process = function() {
-				console.log('process');
-			};
 		}
 	}
 })
@@ -124,7 +113,14 @@ console.log('fillBlanks', el);
 		},
 		templateUrl: './app/verse/verse-word-or-blank.tpl.html',
 		link: function(scope, el, attr) {
-			console.log('verseWordOrBlank', attr);
+			scope.isBlank = function(word) {
+				return /QQQQ/.test(word);
+			};
+
+			scope.process = function(evt, ndx) {
+				var el = evt.currentTarget;
+				console.log('process', el.value, ndx);
+			};
 		}
 	};
 })
