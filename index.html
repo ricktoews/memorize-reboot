@@ -113,10 +113,12 @@ angular.module('memorize', ['ui.router'])
 .directive('fillBlanks', function() {
 	return {
 		scope: {
+			verse: '=',
 			blanks: '='
 		},
 		templateUrl: './app/verse/fill-blanks.tpl.html',
 		link: function(scope, el, attr) {
+
 		}
 	}
 })
@@ -124,6 +126,7 @@ angular.module('memorize', ['ui.router'])
 .directive('verseWordOrBlank', function(MemSvc) {
 	return {
 		scope: {
+			verse: '=',
 			verseWord: '@verseWord',
 			wordIndex: '@wordIndex'
 		},
@@ -135,7 +138,7 @@ angular.module('memorize', ['ui.router'])
 
 			scope.process = function(evt, ndx) {
 				var el = evt.currentTarget;
-				console.log('process', el.value, ndx);
+				console.log('process', scope.verse, el.value, ndx);
 				console.log('text', MemSvc.getText());
 			};
 		}
