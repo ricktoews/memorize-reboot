@@ -42,7 +42,8 @@ angular.module('memorize', ['ui.router'])
 			url: '/main',
 			views: {
 				'passage@': {
-					controller: function($scope) {
+					controller: function(MemSvc, $scope) {
+						MemSvc.saveText(memtext);
 						$scope.memtext = memtext;	
 					}
 				}
@@ -51,6 +52,21 @@ angular.module('memorize', ['ui.router'])
 		;
 	
 	$urlRouterProvider.otherwise('/main');
+})
+
+.factory('MemSvc', function() {
+	var svc = {};
+
+	var memText;
+	svc.saveText = function(text) {
+		memText = text.verses;
+	};
+
+	svc.getText = function() {
+		return memText;
+	};
+
+	return svc;
 })
 
 .directive('memVerse', function($rootScope, VerseHelper) {
@@ -105,7 +121,7 @@ angular.module('memorize', ['ui.router'])
 	}
 })
 
-.directive('verseWordOrBlank', function() {
+.directive('verseWordOrBlank', function(MemSvc) {
 	return {
 		scope: {
 			verseWord: '@verseWord',
@@ -120,6 +136,7 @@ angular.module('memorize', ['ui.router'])
 			scope.process = function(evt, ndx) {
 				var el = evt.currentTarget;
 				console.log('process', el.value, ndx);
+				console.log('text', MemSvc.getText());
 			};
 		}
 	};
