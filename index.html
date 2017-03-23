@@ -29,7 +29,69 @@
 </div>
 
 <script>
-angular.module('memorize', ['ui.router'])
+angular.module('ngCacheBuster', [])
+  .config(['$httpProvider', function($httpProvider) {
+    return $httpProvider.interceptors.push('httpRequestInterceptorCacheBuster');
+  }])
+    .provider('httpRequestInterceptorCacheBuster', function() {
+	
+	this.matchlist = [/.*partials.*/, /.*views.*/ ];
+	this.logRequests = false;
+	
+	//Default to whitelist (i.e. block all except matches)
+	this.black=false; 
+	
+	//Select blacklist or whitelist, default to whitelist
+	this.setMatchlist = function(list,black) {
+	    this.black = typeof black != 'undefined' ? black : false
+	    this.matchlist = list;
+	};
+	
+
+	this.setLogRequests = function(logRequests) {
+	    this.logRequests = logRequests;
+	};
+	
+	this.$get = ['$q', '$log', function($q, $log) {
+	    var matchlist = this.matchlist;
+	    var logRequests = this.logRequests;
+	    var black = this.black;
+        if (logRequests) {
+            $log.log("Blacklist? ",black);
+        }
+	    return {
+		'request': function(config) {
+		    //Blacklist by default, match with whitelist
+		    var busted= !black; 
+		    
+		    for(var i=0; i< matchlist.length; i++){
+			if(config.url.match(matchlist[i])) {
+			    busted=black; break;
+			}
+		    }
+		    
+		    //Bust if the URL was on blacklist or not on whitelist
+		    if (busted) {
+			var d = new Date();
+			config.url = config.url.replace(/[?|&]cacheBuster=\d+/,'');
+			//Some url's allready have '?' attached
+			config.url+=config.url.indexOf('?') === -1 ? '?' : '&'
+			config.url += 'cacheBuster=' + d.getTime();
+		    }
+		    
+		    if (logRequests) {
+			var log='request.url =' + config.url
+			busted ? $log.warn(log) : $log.info(log)
+		    }
+
+		    return config || $q.when(config);
+		}
+	    }
+	}];
+    });
+
+
+angular.module('memorize', ['ui.router', 'ngCacheBuster'])
 
 .config(function($stateProvider, $urlRouterProvider) {
 	$stateProvider
@@ -54,16 +116,27 @@ angular.module('memorize', ['ui.router'])
 	$urlRouterProvider.otherwise('/main');
 })
 
-.factory('MemSvc', function() {
+.factory('MemSvc', function(VerseHelper) {
 	var svc = {};
 
 	var memText;
-	svc.saveText = function(text) {
-		memText = text.verses;
+    var verseWords;
+	svc.saveText = function(passageObj) {
+        verseWords = VerseHelper.cleanVerses(passageObj.verses);
+console.log('saveText clean', verseWords);
+		memText = passageObj.verses;
 	};
 
 	svc.getText = function() {
 		return memText;
+	};
+
+	svc.check = function(vndx, ndx, val) {
+		var words = verseWords[vndx];
+		var word = words[ndx];
+console.log('svc.check', word, val);
+		var wordMatch = val === word;
+		return wordMatch;
 	};
 
 	return svc;
@@ -106,6 +179,11 @@ angular.module('memorize', ['ui.router'])
 				$rootScope.$broadcast('selectedVerse', { verse: scope.verse });
 			};
 
+			scope.checkInput = function($evt) {
+				var el = element[0].getElementsByClassName('verse-input')[0];
+				var inputText = el.innerText;
+			};
+
 		}
 	};
 })
@@ -138,8 +216,11 @@ angular.module('memorize', ['ui.router'])
 
 			scope.process = function(evt, ndx) {
 				var el = evt.currentTarget;
-				console.log('process', scope.verse, el.value, ndx);
-				console.log('text', MemSvc.getText());
+				var result = MemSvc.check(scope.verse - 1, ndx, el.value);
+				if (result) {
+					scope.verseWord = el.value;
+				};
+				console.log('process', result);
 			};
 		}
 	};
@@ -148,8 +229,32 @@ angular.module('memorize', ['ui.router'])
 .factory('VerseHelper', function() {
 	var helper = {};
 
-	helper.parseVerse = function(text, wrong) {
+	function clean(text) {
+		text = text.replace(/--/g, ' ');
 		var words = text.split(/ /);
+		words.forEach((word, ndx) => {
+			words[ndx] = word.replace(/[.,'"!?]/g, '');
+		});
+
+		return words;
+	}
+
+	helper.splitVerse = function(text) {
+		var words = text.split(/ /);
+		return words;
+	};
+
+	helper.cleanVerses = function(verseArr) {
+		var cleaned = []
+		verseArr.forEach((verseObj) => {
+			cleaned.push(clean(verseObj.text));
+		});
+
+		return cleaned;
+	};
+
+	helper.parseVerse = function(text, wrong) {
+		var words = helper.splitVerse(text);
 		var withBlanks = [];
 		words.forEach((word, idx) => {
 			if (wrong.indexOf(idx) !== -1) {
